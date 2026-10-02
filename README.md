@@ -17,15 +17,19 @@ group at the bottom of the menu.
 ## Install
 
 ```
-# install straight from GitHub (into a web-style profile)
-dsh plugin --profile web add github:yuanxinbin520/dsh-session-cleaner
+# from npm — recommended, and it needs no GitHub access
+dsh plugin --profile web add @yuanxinbin520/dsh-session-cleaner
 
-# pin a release tag
-dsh plugin --profile web add github:yuanxinbin520/dsh-session-cleaner#v0.1.0
+# straight from GitHub, pinned to a release tag
+dsh plugin --profile web add github:yuanxinbin520/dsh-session-cleaner#v0.1.1
 
 # over HTTPS — use this when SSH port 22 is blocked on your network
 dsh plugin --profile web add https://github.com/yuanxinbin520/dsh-session-cleaner.git
 ```
+
+> The npm package is **scoped** (`@yuanxinbin520/dsh-session-cleaner`). The unscoped name
+> `dsh-session-cleaner` on npm belongs to an unrelated package, so always use the full scoped spec (or a
+> GitHub spec) — a bare `dsh-session-cleaner` would install someone else's plugin.
 
 If a `github:` install fails with `ssh: connect to host github.com port 22: Connection refused`, use the
 HTTPS form above, or route SSH over port 443 by adding this to `~/.ssh/config`:
@@ -37,13 +41,21 @@ Host github.com
 ```
 
 On Windows behind a TLS-inspecting proxy, `git` may instead fail with
-`SSL certificate problem: unable to get local issuer certificate` — point it at the Windows
-certificate store with `git config --global http.sslBackend schannel`, or use SSH over 443 above.
+`SSL certificate problem: unable to get local issuer certificate`. Point just GitHub at the Windows
+certificate store with:
+
+```
+git config --global 'http.https://github.com/.sslBackend' schannel
+```
+
+(the broader `git config --global http.sslBackend schannel` works too), or use the npm spec above, which
+skips git entirely.
 
 The **desktop** profile is managed exclusively by the Electron app, so `dsh plugin --profile desktop`
-refuses; install it from **Settings → Plugins** instead, or let the plugin manager run
-`install_bundle github:yuanxinbin520/dsh-session-cleaner`. A profile restart (or a page refresh for the
-client half) activates it.
+refuses; install it from **Settings → Plugins** instead (paste `@yuanxinbin520/dsh-session-cleaner`, with
+the registry set to the npm mirror if GitHub is unreachable), or let the plugin manager run
+`install_bundle @yuanxinbin520/dsh-session-cleaner`. A profile restart (or a page refresh for the client
+half) activates it.
 
 Requirements: DSH `>= 0.2.0-rc.1` (tested on `0.2.0-rc.2`), Node `>= 22.15` (uses the built-in
 `node:zlib` Zstandard API — no dependencies, no build step).

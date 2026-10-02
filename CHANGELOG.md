@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.1
+
+- 包名改为 **scoped** `@yuanxinbin520/dsh-session-cleaner`（npm 上不带 scope 的 `dsh-session-cleaner`
+  已被无关包占用），`cordis.patch.yml` 的 `name` 同步为 scoped 名，并加上 `publishConfig.access: public`。
+- README 补充 npm 安装方式、Hub/示例目录的收录方式，以及 GitHub 不可达时的镜像源与 git 证书处理。
+- 功能无变化。
+
 ## 0.1.0
 
 首个版本，只做两件事，都挂在会话行「…」菜单底部（内置 pin/rename/fork/archive 之后）：
