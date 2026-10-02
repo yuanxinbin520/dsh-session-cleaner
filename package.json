@@ -1,6 +1,6 @@
 {
-  "name": "@yuanxinbin520/dsh-session-cleaner",
-  "version": "0.1.1",
+  "name": "@beiwen/dsh-session-cleaner",
+  "version": "0.1.2",
   "description": "DSH 会话管理精简插件：在会话行的“…”菜单里彻底删除会话（含 DSH 没有清理接口的投影缓存）与移动到其他工作区。Thorough session deletion + cross-workspace move, right in the session “…” menu.",
   "type": "module",
   "main": "lib/index.js",

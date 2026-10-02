@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.1.2
+
+- 包名改为 **`@beiwen/dsh-session-cleaner`**：npm 只允许发布到自己用户名或自己组织的 scope 下，而本项目的
+  npm 账号是 `beiwen`（`@yuanxinbin520` 那个 scope 不属于该账号，发布会被 403 拒绝）。
+  `cordis.patch.yml` 的 `name` 同步更新。功能无变化。
+
 ## 0.1.1
 
 - 包名改为 **scoped** `@yuanxinbin520/dsh-session-cleaner`（npm 上不带 scope 的 `dsh-session-cleaner`

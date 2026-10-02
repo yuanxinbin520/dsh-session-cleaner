@@ -3,4 +3,4 @@
 # (scoped name included) — it resolves from the profile's own node_modules.
 - insert:
     - id: session-cleaner
-      name: "@yuanxinbin520/dsh-session-cleaner"
+      name: "@beiwen/dsh-session-cleaner"

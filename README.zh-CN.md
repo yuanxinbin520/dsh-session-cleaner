@@ -50,16 +50,16 @@ DSH 的工作区归属由会话头行里不可变的 `cwd` 推导，所以只改
 
 ```
 # 从 npm 安装（推荐，不需要访问 GitHub）
-dsh plugin --profile web add @yuanxinbin520/dsh-session-cleaner
+dsh plugin --profile web add @beiwen/dsh-session-cleaner
 
 # 直接从 GitHub 安装并固定到发布 tag
-dsh plugin --profile web add github:yuanxinbin520/dsh-session-cleaner#v0.1.1
+dsh plugin --profile web add github:yuanxinbin520/dsh-session-cleaner#v0.1.2
 
 # 走 HTTPS —— 网络屏蔽 SSH 22 端口时用这个
 dsh plugin --profile web add https://github.com/yuanxinbin520/dsh-session-cleaner.git
 ```
 
-> npm 上用的是 **scoped 名**（`@yuanxinbin520/dsh-session-cleaner`）。不带 scope 的 `dsh-session-cleaner`
+> npm 上发布在作者账号的 scope 下：**`@beiwen/dsh-session-cleaner`**。不带 scope 的 `dsh-session-cleaner`
 > 在 npm 上属于另一个不相关的包，所以请始终填完整 scoped 名（或 GitHub 形式的 spec）——填裸名
 > `dsh-session-cleaner` 会装到别人的插件。
 
@@ -82,8 +82,8 @@ git config --global 'http.https://github.com/.sslBackend' schannel
 路径完全不经过 git。
 
 desktop profile 由 Electron 应用独占管理，命令行会拒绝；请用应用内的 **设置 → 插件** 安装（填
-`@yuanxinbin520/dsh-session-cleaner`，GitHub 不通时把安装源切到中国大陆镜像源），或让插件管理器执行
-`install_bundle @yuanxinbin520/dsh-session-cleaner`。安装后重启（客户端半只需刷新页面）即可生效。
+`@beiwen/dsh-session-cleaner`，GitHub 不通时把安装源切到中国大陆镜像源），或让插件管理器执行
+`install_bundle @beiwen/dsh-session-cleaner`。安装后重启（客户端半只需刷新页面）即可生效。
 
 要求：DSH `>= 0.2.0-rc.1`（在 `0.2.0-rc.2` 上验证），Node `>= 22.15`（使用内置 `node:zlib` 的 Zstandard API）——**无第三方依赖、无需构建**。
 
