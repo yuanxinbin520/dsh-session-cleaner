@@ -1,0 +1,13 @@
+# dependencies / local installs
+node_modules/
+.pnpm-store/
+*.tgz
+
+# DSH profile residue that must never be committed
+.plugin-manager/
+package.json.bak-*
+
+# scratch
+*.log
+.DS_Store
+Thumbs.db

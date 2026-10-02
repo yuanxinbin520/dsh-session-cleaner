@@ -1,0 +1,6 @@
+# dsh-session-cleaner bundle patch: one host row over the Desktop / Web profile.
+# `name` resolves from the profile's own node_modules, where the bundle was
+# installed (pnpm link / `dsh plugin add`).
+- insert:
+    - id: session-cleaner
+      name: dsh-session-cleaner

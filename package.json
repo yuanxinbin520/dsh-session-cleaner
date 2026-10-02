@@ -1,0 +1,98 @@
+{
+  "name": "dsh-session-cleaner",
+  "version": "0.1.0",
+  "description": "DSH 会话管理精简插件：在会话行的“…”菜单里彻底删除会话（含 DSH 没有清理接口的投影缓存）与移动到其他工作区。Thorough session deletion + cross-workspace move, right in the session “…” menu.",
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./client": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "lib",
+    "cordis.patch.yml",
+    "README.md",
+    "README.zh-CN.md",
+    "CHANGELOG.md",
+    "LICENSE"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-slots"
+      ],
+      "platform": "web"
+    },
+    "compatibility": {
+      "dsh": ">=0.2.0-rc.1",
+      "dshReleases": {
+        "0.2.0-rc.2": "compatible"
+      }
+    }
+  },
+  "dshhub": {
+    "schemaVersion": 1,
+    "displayName": "dsh-session-cleaner",
+    "summary": "会话“…”菜单里的两个操作：彻底删除会话（日志全代次 + 工作区归属 + 归档/收藏标记 + 投影缓存）与跨工作区移动（重写 cwd、原子搬运、打开中的会话不销毁、可回滚）。",
+    "categories": [
+      "会话管理",
+      "Web UI"
+    ],
+    "surfaces": [
+      "host",
+      "web"
+    ],
+    "capabilities": {
+      "provides": [
+        "slot:sidebar.workspaces.session.menu.item",
+        "route:/session-cleaner/api"
+      ]
+    },
+    "compatibility": {
+      "dsh": ">=0.2.0-rc.1",
+      "node": ">=22.15.0"
+    },
+    "permissions": {
+      "filesystem": [
+        "$DSH_HOME/sessions/<project>/session-<id>/ (delete, move)",
+        "$DSH_HOME/storages/session_projcache/ (delete)",
+        "$DSH_HOME/storages/session_projcache.json (delete one row, with .bak)"
+      ]
+    }
+  },
+  "keywords": [
+    "dsh",
+    "dsh-plugin",
+    "dshhub",
+    "deepseek-harness",
+    "session",
+    "session-manager",
+    "delete-session",
+    "workspace",
+    "move-session"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yuanxinbin520/dsh-session-cleaner.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yuanxinbin520/dsh-session-cleaner/issues"
+  },
+  "homepage": "https://github.com/yuanxinbin520/dsh-session-cleaner#readme",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.15.0 || >=24.0.0"
+  },
+  "scripts": {
+    "test": "node test/verify-artifacts.mjs && node test/verify-ops.mjs",
+    "check": "node --check lib/index.js && node --check lib/client.js && node --check lib/ops.js && node --check lib/artifact.js"
+  }
+}
