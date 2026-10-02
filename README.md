@@ -36,6 +36,10 @@ Host github.com
   Port 443
 ```
 
+On Windows behind a TLS-inspecting proxy, `git` may instead fail with
+`SSL certificate problem: unable to get local issuer certificate` — point it at the Windows
+certificate store with `git config --global http.sslBackend schannel`, or use SSH over 443 above.
+
 The **desktop** profile is managed exclusively by the Electron app, so `dsh plugin --profile desktop`
 refuses; install it from **Settings → Plugins** instead, or let the plugin manager run
 `install_bundle github:yuanxinbin520/dsh-session-cleaner`. A profile restart (or a page refresh for the

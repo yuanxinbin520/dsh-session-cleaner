@@ -67,6 +67,10 @@ Host github.com
   Port 443
 ```
 
+Windows 上若处于 TLS 劫持代理环境，git 还可能报 `SSL certificate problem: unable to get local issuer
+certificate`：用 `git config --global http.sslBackend schannel` 改走 Windows 证书库，或采用上面的
+SSH 443 方式。
+
 desktop profile 由 Electron 应用独占管理，命令行会拒绝；请用应用内的 **设置 → 插件** 安装，或让插件管理器执行 `install_bundle github:yuanxinbin520/dsh-session-cleaner`。安装后重启（客户端半只需刷新页面）即可生效。
 
 要求：DSH `>= 0.2.0-rc.1`（在 `0.2.0-rc.2` 上验证），Node `>= 22.15`（使用内置 `node:zlib` 的 Zstandard API）——**无第三方依赖、无需构建**。
