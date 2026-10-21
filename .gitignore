@@ -2,6 +2,8 @@
 node_modules/
 .pnpm-store/
 *.tgz
+# the DBX 模式 preset ships as a single-file tarball on purpose
+!dsh-preset-dbx-*.tgz
 
 # DSH profile residue that must never be committed
 .plugin-manager/

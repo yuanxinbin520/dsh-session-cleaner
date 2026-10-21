@@ -25,7 +25,8 @@ dsh plugin add link:./dsh-preset-dbx     # 安装（桌面版请在 GUI 插件�
 ## 在其他电脑上安装
 
 只需要复制**本目录**（共 3 个文件：`package.json`、`cordis.patch.yml`、`README.md`），
-或者复制打包好的 `dsh-preset-dbx-0.1.0.tgz` 单文件。profile 里的任何东西都不用抄。
+或者复制打包好的单文件 tgz —— 本仓库根目录已附带 `dsh-preset-dbx-0.1.0.tgz`，
+clone/下载仓库即可拿到。profile 里的任何东西都不用抄。
 
 目标电脑的前置条件：
 
@@ -36,13 +37,16 @@ dsh plugin add link:./dsh-preset-dbx     # 安装（桌面版请在 GUI 插件�
 
 安装步骤：
 
-1. 把目录放到一个固定位置，例如 `D:\dsh-presets\dsh-preset-dbx`
+1. 把目录（或 tgz）放到一个固定位置，例如 `D:\dsh-presets\dsh-preset-dbx`
 2. DSH → 插件页 → **添加插件**，填入该目录的**绝对路径**
-   （`D:\dsh-presets\dsh-preset-dbx`），点安装
+   （`D:\dsh-presets\dsh-preset-dbx`），点安装；用 tgz 时填 tgz 的绝对路径
+   （`D:\dsh-presets\dsh-preset-dbx-0.1.0.tgz`），点安装
 3. 刷新页面 / 重开窗口，新建会话的模式选择里出现 **DBX 模式**
 
 > 用目录路径安装记录的是 `link:` 链接，安装后**不要移动或删除该目录**。
-> 如果希望单文件、目录可删，改用 tgz：添加插件时填 tgz 的绝对路径。
+> 用 tgz 安装得到的是实体拷贝，运行时不依赖该文件：安装后删掉 tgz 不影响
+> 使用；但 profile 的依赖记录仍指向那个 tgz 路径，重装 / 换机 /
+> 清理 node_modules 后需要把 tgz 放回同一路径（或重新按新路径安装）。
 
 ## 维护提示
 
