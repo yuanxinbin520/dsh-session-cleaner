@@ -1,0 +1,15 @@
+{
+  "name": "dsh-preset-dbx",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DBX 模式：标准模式 + DBX MCP 服务（数据库 / SSH·SFTP）的 DeepSeek Harness agent preset 补丁包。",
+  "files": [
+    "cordis.patch.yml",
+    "README.md"
+  ],
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  }
+}
