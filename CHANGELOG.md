@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.0
+
+- **修复：配置开关页在 0.2.1 桌面运行时里不出现**。0.2.1 把「插件配置」搬出了设置页
+  （设置 →「内置插件」只剩一个托管标签页的壳），因此 0.1.4 的 `settings.plugin.item`
+  卡片在那个槽位里永远不会被渲染。现在改为注册到 `settings.plugins.tab`
+  （`id: config-switches`、`order: 70`、标签「配置开关」），出现在
+  设置 → 内置插件 →「插件列表」「插件市场」之后的标签行里；页面本体（开关列表、
+  开启/关闭、查看片段、删除、新增）与四条 `/session-cleaner/api/switches*` 路由不变。
+- 去掉对 `@deepseek-ai/schemastery` 的依赖与 settings 命名空间注册：0.2.x 的页面由
+  `settings.plugins.tab` 承载，不再需要「Host 提供的命名空间」作为卡片 key
+  （0.1.x 的卡片机制已无意义），插件因此变成 Host 侧零外部依赖。
+- `dsh.client.inject` 增加 `@deepseek-ai/dsh-client-ui-settings`；
+  `dshhub.capabilities.provides` 改为 `slot:settings.plugins.tab`。
+- 新测试 `test/verify-client-tab.mjs`：在 `vm` 里执行真实客户端 bundle，断言只注册一个
+  `settings.plugins.tab` 页、id/order/标签正确，且原有的会话菜单两行与确认对话框注册不变。
+- 已在 0.2.1-rc.5 运行时上用独立 profile 实测：boot graph 收录该行、客户端 bundle 正常下发、
+  `GET /session-cleaner/api/switches` 返回正确的 profile 与补丁路径。
+
 ## 0.1.4
 
 - **新增：配置开关**。设置 → 插件 →「插件配置」里多一张卡片，把任意 patch 片段写进当前 profile

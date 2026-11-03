@@ -48,11 +48,11 @@ DSH 的工作区归属由会话头行里不可变的 `cwd` 推导，所以只改
 
 ## 配置开关
 
-设置 → 插件 →「插件配置」里会出现本插件的一张**配置开关**卡片。它做一件很小的事：把一段 patch 片段写进当前 profile 的 `cordis.patch.yml`，并随时开关。
+设置 → **内置插件** →「配置开关」标签页（在「插件列表」「插件市场」之后）是本插件的**配置开关**页。它做一件很小的事：把一段 patch 片段写进当前 profile 的 `cordis.patch.yml`，并随时开关。
 
 - **热生效**：profile 补丁层由 DSH 的 HMR 监听（`patchReload: live`），改完约 1 秒内重新组合——不需要重启，也不只是新会话，运行中的会话工具集同样跟着变。
 - **一个开关 = 一段 YAML 片段**：片段以 `- insert:` 或 `- id:` 开头即可；插件自动从片段里的 `id:` 行推导行 id，并在块内加 `- id: <row>` + `disabled: true|false` 覆盖行来表达开/关。片段加了 `id` 时还可以关掉 profile 里任何已有的一行。
-- **卡片上的操作**：开启 / 关闭、查看片段、删除、新增（名称 + 可选 id + 片段）。每次写盘前把 `cordis.patch.yml` 备份成 `cordis.patch.yml.bak-<时间戳>`，写盘是原子替换，插件块之外你手写的行原样保留。
+- **页面上的操作**：开启 / 关闭、查看片段、删除、新增（名称 + 可选 id + 片段）。每次写盘前把 `cordis.patch.yml` 备份成 `cordis.patch.yml.bak-<时间戳>`，写盘是原子替换，插件块之外你手写的行原样保留。
 - **落盘位置**：状态在 `<DSH_HOME>/config-switches/switches.json`，补丁写 `<DSH_HOME>/profiles/<profile>/cordis.patch.yml`。
 - **内置示例**：`DBX MCP 工具` —— 把 `@deepseek-ai/dsh-mcp-client` 挂到宿主层（全局工具），所有模式（含标准模式）都能用 `mcp__dbx__*`；代价是每轮多约 28K tokens 的工具定义，用完关掉即可。
 
