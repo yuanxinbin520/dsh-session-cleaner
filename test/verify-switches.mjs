@@ -128,6 +128,14 @@ check('composePatch strips managed blocks but keeps plugin rows', (() => {
   return next === `${USER_PATCH.trimEnd()}\n`
 })())
 
+check('composePatch drops the template empty-list literal', (() => {
+  // A freshly initialized profile seeds the layer with `[]`, which cannot sit
+  // alongside list items; the composed document must stay valid YAML.
+  const template = '# Your patch layer for this dsh profile, applied after every bundle layer:\n[]\n'
+  const next = composePatch(template, [defaultSwitches()[0]])
+  return next.includes('- insert:') && !next.split('\n').includes('[]')
+})())
+
 throws('rejects a fragment without a list item', 'bad-request', () => addSwitch(options, { name: 'x', insert: 'id: nope' }))
 throws('rejects a fragment without ids', 'bad-request', () => addSwitch(options, { name: 'x', insert: '- name: "@x/y"' }))
 throws('rejects tab indentation', 'bad-request', () => addSwitch(options, { name: 'x', insert: '- id: y\n\tname: "@x/y"' }))
