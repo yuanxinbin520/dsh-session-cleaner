@@ -14,6 +14,16 @@ The shipped rows occupy `pin` (100) / `rename` (200) / `fork` (300) / `archive` 
 registers at 500 and 600, and the first row carries `separatorBefore`, so both appear as their own
 group at the bottom of the menu.
 
+## Config switches
+
+**Settings → Plugins → Plugin configuration** shows one more card from this plugin: **config switches**. It does one small thing — it writes a patch fragment into the active profile's `cordis.patch.yml` and can toggle it at any time.
+
+- **Hot by design**: DSH watches the profile patch layer (`patchReload: live`) and recomposes within about a second, so no restart is involved — and it is not limited to new sessions; a running session's tool set follows the change too.
+- **One switch = one YAML fragment**: the fragment may start with `- insert:` or `- id:`; the plugin derives the row ids from the fragment's `id:` lines and expresses on/off as `- id: <row>` + `disabled: true|false` rows inside its own block. A fragment that carries an `id` can also disable any existing row of the profile.
+- **Card actions**: enable / disable, view the fragment, delete, add (name + optional id + fragment). Every write backs up `cordis.patch.yml` to `cordis.patch.yml.bak-<timestamp>` and replaces the file atomically; hand-written rows outside the managed blocks are preserved verbatim.
+- **On disk**: state in `<DSH_HOME>/config-switches/switches.json`, patch in `<DSH_HOME>/profiles/<profile>/cordis.patch.yml`.
+- **Bundled example**: `DBX MCP 工具` mounts `@deepseek-ai/dsh-mcp-client` on the host layer (global tools), so every mode — standard included — gets the `mcp__dbx__*` tools; it costs roughly 28K tokens of tool definitions per turn, so turn it off when unused.
+
 ## Install
 
 ```
@@ -112,6 +122,10 @@ The host half registers a prefix route on `ctx.webServer`:
 | GET | `/session-cleaner/api/workspaces?sessionId=…` | Workspace list + the session's current workspace |
 | POST | `/session-cleaner/api/move` | `{ sessionId, targetWorkspaceId }` |
 | POST | `/session-cleaner/api/delete` | `{ sessionId }` |
+| GET | `/session-cleaner/api/switches` | Switch list + target profile and patch path |
+| POST | `/session-cleaner/api/switches/toggle` | `{ id, enabled }` |
+| POST | `/session-cleaner/api/switches/add` | `{ id?, name, description?, insert }` |
+| POST | `/session-cleaner/api/switches/remove` | `{ id }` |
 
 Same-origin `fetch`, no extra auth header; mutations are serialized per session id.
 
@@ -121,6 +135,7 @@ Same-origin `fetch`, no extra auth header; mutations are serialized per session 
 npm run check                    # syntax check both halves
 node test/verify-artifacts.mjs   # decode -> re-encode -> decode round-trip over real logs
 node test/verify-ops.mjs         # delete / move / truncated log / path safety on a temp fixture
+node test/verify-switches.mjs    # switch engine: block composition, idempotence, disabled-only flips
 ```
 
 `test/verify-artifacts.mjs` is the test that protects the move path: DSH's `.jsonl.zstd` files are

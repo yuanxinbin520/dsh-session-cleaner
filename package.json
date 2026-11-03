@@ -1,7 +1,7 @@
 {
   "name": "@beiwen/dsh-session-cleaner",
-  "version": "0.1.3",
-  "description": "DSH 会话管理精简插件：在会话行的“…”菜单里彻底删除会话（含 DSH 没有清理接口的投影缓存）与移动到其他工作区。Thorough session deletion + cross-workspace move, right in the session “…” menu.",
+  "version": "0.1.4",
+  "description": "DSH 会话管理精简插件：在会话行的“…”菜单里彻底删除会话（含 DSH 没有清理接口的投影缓存）与移动到其他工作区；并在 设置 → 插件 → 插件配置 提供配置开关，把任意补丁片段写进 profile 的 cordis.patch.yml 并可热开关。Thorough session deletion + cross-workspace move, plus hot config switches over the profile patch layer.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {
@@ -41,7 +41,7 @@
   "dshhub": {
     "schemaVersion": 1,
     "displayName": "dsh-session-cleaner",
-    "summary": "会话“…”菜单里的两个操作：彻底删除会话（日志全代次 + 工作区归属 + 归档/收藏标记 + 投影缓存）与跨工作区移动（重写 cwd、原子搬运、打开中的会话不销毁、可回滚）。",
+    "summary": "会话“…”菜单里的两个操作：彻底删除会话（日志全代次 + 工作区归属 + 归档/收藏标记 + 投影缓存）与跨工作区移动（重写 cwd、原子搬运、打开中的会话不销毁、可回滚）；另带「配置开关」卡片，把任意补丁片段热插进 profile 补丁层。",
     "categories": [
       "会话管理",
       "Web UI"
@@ -53,6 +53,7 @@
     "capabilities": {
       "provides": [
         "slot:sidebar.workspaces.session.menu.item",
+        "slot:settings.plugin.item",
         "route:/session-cleaner/api"
       ]
     },
@@ -95,7 +96,7 @@
     "access": "public"
   },
   "scripts": {
-    "test": "node test/verify-client-id.mjs && node test/verify-artifacts.mjs && node test/verify-ops.mjs",
-    "check": "node --check lib/index.js && node --check lib/client.js && node --check lib/ops.js && node --check lib/artifact.js"
+    "test": "node test/verify-client-id.mjs && node test/verify-artifacts.mjs && node test/verify-ops.mjs && node test/verify-switches.mjs",
+    "check": "node --check lib/index.js && node --check lib/client.js && node --check lib/ops.js && node --check lib/artifact.js && node --check lib/switches.js"
   }
 }

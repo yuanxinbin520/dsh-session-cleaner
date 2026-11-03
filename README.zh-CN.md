@@ -46,6 +46,16 @@ DSH 的工作区归属由会话头行里不可变的 `cwd` 推导，所以只改
 
 打开中的会话移动后无需刷新页面。
 
+## 配置开关
+
+设置 → 插件 →「插件配置」里会出现本插件的一张**配置开关**卡片。它做一件很小的事：把一段 patch 片段写进当前 profile 的 `cordis.patch.yml`，并随时开关。
+
+- **热生效**：profile 补丁层由 DSH 的 HMR 监听（`patchReload: live`），改完约 1 秒内重新组合——不需要重启，也不只是新会话，运行中的会话工具集同样跟着变。
+- **一个开关 = 一段 YAML 片段**：片段以 `- insert:` 或 `- id:` 开头即可；插件自动从片段里的 `id:` 行推导行 id，并在块内加 `- id: <row>` + `disabled: true|false` 覆盖行来表达开/关。片段加了 `id` 时还可以关掉 profile 里任何已有的一行。
+- **卡片上的操作**：开启 / 关闭、查看片段、删除、新增（名称 + 可选 id + 片段）。每次写盘前把 `cordis.patch.yml` 备份成 `cordis.patch.yml.bak-<时间戳>`，写盘是原子替换，插件块之外你手写的行原样保留。
+- **落盘位置**：状态在 `<DSH_HOME>/config-switches/switches.json`，补丁写 `<DSH_HOME>/profiles/<profile>/cordis.patch.yml`。
+- **内置示例**：`DBX MCP 工具` —— 把 `@deepseek-ai/dsh-mcp-client` 挂到宿主层（全局工具），所有模式（含标准模式）都能用 `mcp__dbx__*`；代价是每轮多约 28K tokens 的工具定义，用完关掉即可。
+
 ## 安装
 
 ```
@@ -106,6 +116,10 @@ dsh plugin --profile <name> add link:/absolute/path/to/dsh-session-cleaner
 | GET | `/workspaces?sessionId=…` | 工作区列表 + 该会话当前所属工作区 |
 | POST | `/move` | `{ sessionId, targetWorkspaceId }` |
 | POST | `/delete` | `{ sessionId }` |
+| GET | `/switches` | 开关列表 + 目标 profile 与补丁路径 |
+| POST | `/switches/toggle` | `{ id, enabled }` |
+| POST | `/switches/add` | `{ id?, name, description?, insert }` |
+| POST | `/switches/remove` | `{ id }` |
 
 同源 `fetch`，无需额外鉴权头；按会话 id 串行化，避免同一会话并发操作。
 
@@ -115,6 +129,7 @@ dsh plugin --profile <name> add link:/absolute/path/to/dsh-session-cleaner
 npm run check                    # 两半的语法检查
 node test/verify-artifacts.mjs   # 对真实日志做「解码→重编码→解码」字节级往返校验
 node test/verify-ops.mjs         # 在临时 fixture 里跑删除/移动/损坏日志/路径安全
+node test/verify-switches.mjs    # 开关引擎：块合成、幂等、只翻 disabled、保留用户手写行
 ```
 
 `test/verify-artifacts.mjs` 是保护移动操作的关键测试：DSH 的 `.jsonl.zstd` 是**逐批拼接的多帧**（实测一个 9.9 MB 日志含 7189 帧、解出 35.6 MB），任何只读第一帧的解码器都会把日志截成只剩头行。两套测试都自带 fixture：没有 DSH 安装时 ops 套件会自造 2001 帧的合成日志，因此 CI 无需 Harness 环境。

@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.4
+
+- **新增：配置开关**。设置 → 插件 →「插件配置」里多一张卡片，把任意 patch 片段写进当前 profile
+  的 `cordis.patch.yml` 并可热开关。开关落地方式是「常驻 `- insert:` 块 + 后置 `- id: <row>` +
+  `disabled: true|false` 覆盖行」，依赖 profile 补丁层的 HMR（`patchReload: live`），约 1 秒内
+  重新组合，不需要重启，运行中的会话工具集也会跟着变。
+  - 新文件 `lib/switches.js`：零依赖开关引擎（块合成、幂等、原子写、时间戳备份、状态文件、
+    片段校验与四类错误码）。
+  - `lib/index.js`：注册 settings 命名空间 `config-switches`（卡片靠它出现），新增
+    `GET /switches`、`POST /switches/{toggle,add,remove}`。
+  - `lib/client.js`：`settings.plugin.item` 卡片，含开启/关闭、查看片段、删除、新增。
+  - 新测试 `test/verify-switches.mjs`（27 条断言），并加入 `npm test`。
+  - 内置示例开关 `DBX MCP 工具`：把 `@deepseek-ai/dsh-mcp-client` 挂到宿主层。
+- 已有的会话删除 / 跨工作区移动行为不变（`verify-ops`、`verify-artifacts`、`verify-client-id` 全绿）。
+
 ## 0.1.3
 
 - **修复：装了这个插件后 DSH 无法启动**。`lib/client.js` 的
