@@ -21,7 +21,8 @@ import {
   removeSwitch,
   renderBlock,
   resolvePaths,
-  setSwitch
+  setSwitch,
+  updateSwitch
 } from '../lib/switches.js'
 
 const root = fs.mkdtempSync(path.join(os.tmpdir(), 'dsh-switches-'))
@@ -116,6 +117,20 @@ check('add: new block available in the listing', listSwitches(options).switches.
 await setSwitch(options, added.id, true)
 check('add: toggled on', read().includes('- id: example-row\n  disabled: false'))
 
+const updated = await updateSwitch(options, added.id, {
+  name: '示例开关（已改）',
+  insert: '- id: example-row\n  name: "@example/plugin"\n  config:\n    flag: false'
+})
+const afterUpdate = read()
+check('update: keeps the same id and on/off state', updated.id === added.id && updated.enabled === true)
+check('update: name replaced', updated.name === '示例开关（已改）')
+check('update: fragment replaced in the patch', afterUpdate.includes('flag: false') && !afterUpdate.includes('flag: true'))
+check('update: row still toggled on', afterUpdate.includes('- id: example-row\n  disabled: false'))
+check('update: second row id derived from the new fragment', JSON.stringify(updated.rows) === JSON.stringify(['example-row']))
+check('update: description kept when omitted', updated.description === 'test fragment')
+check('update: user lines intact', afterUpdate.startsWith(USER_PATCH.trimEnd()))
+check('update: listing reflects the new name', listSwitches(options).switches.some(sw => sw.id === added.id && sw.name === '示例开关（已改）'))
+
 await removeSwitch(options, added.id)
 check('remove: block gone', !read().includes('example-row'))
 check('remove: remaining switch survives', read().includes(beginOf('mcp-dbx')))
@@ -140,6 +155,8 @@ throws('rejects a fragment without a list item', 'bad-request', () => addSwitch(
 throws('rejects a fragment without ids', 'bad-request', () => addSwitch(options, { name: 'x', insert: '- name: "@x/y"' }))
 throws('rejects tab indentation', 'bad-request', () => addSwitch(options, { name: 'x', insert: '- id: y\n\tname: "@x/y"' }))
 throws('rejects an unsafe id', 'bad-request', () => setSwitch(options, '../escape', true))
+throws('rejects updating an unknown switch', 'switch-not-found', () => updateSwitch(options, 'not-there', { name: 'x' }))
+throws('rejects an update without ids in the fragment', 'bad-request', () => updateSwitch(options, 'mcp-dbx', { insert: '- name: "@x/y"' }))
 throws('rejects a missing switch', 'switch-not-found', () => setSwitch(options, 'not-there', true))
 
 fs.writeFileSync(path.join(dshHome, 'config-switches', 'switches.json'), '{not json', 'utf8')

@@ -1,7 +1,7 @@
 {
   "name": "@beiwen/dsh-session-cleaner",
-  "version": "0.2.0",
-  "description": "DSH 会话管理精简插件：在会话行的“…”菜单里彻底删除会话（含 DSH 没有清理接口的投影缓存）与移动到其他工作区；并在 设置 → 内置插件 → 配置开关 提供一页开关，把任意补丁片段写进 profile 的 cordis.patch.yml 并可热开关。Thorough session deletion + cross-workspace move, plus hot config switches over the profile patch layer.",
+  "version": "0.2.1",
+  "description": "DSH 会话管理精简插件：在会话行的“…”菜单里彻底删除会话（含 DSH 没有清理接口的投影缓存）与移动到其他工作区；并在 设置 → 内置插件 → 配置开关 提供一页开关，把任意补丁片段写进 profile 的 cordis.patch.yml 并可热开关、随时改片段。Thorough session deletion + cross-workspace move, plus hot config switches over the profile patch layer.",
   "type": "module",
   "main": "lib/index.js",
   "exports": {

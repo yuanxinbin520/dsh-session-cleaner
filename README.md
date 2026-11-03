@@ -20,7 +20,7 @@ group at the bottom of the menu.
 
 - **Hot by design**: DSH watches the profile patch layer (`patchReload: live`) and recomposes within about a second, so no restart is involved — and it is not limited to new sessions; a running session's tool set follows the change too.
 - **One switch = one YAML fragment**: the fragment may start with `- insert:` or `- id:`; the plugin derives the row ids from the fragment's `id:` lines and expresses on/off as `- id: <row>` + `disabled: true|false` rows inside its own block. A fragment that carries an `id` can also disable any existing row of the profile.
-- **Page actions**: enable / disable, view the fragment, delete, add (name + optional id + fragment). Every write backs up `cordis.patch.yml` to `cordis.patch.yml.bak-<timestamp>` and replaces the file atomically; hand-written rows outside the managed blocks are preserved verbatim.
+- **Page actions**: enable / disable, view the fragment, edit (name, description, fragment — the id and on/off state survive), delete, add (name + optional id + description + fragment). Every write backs up `cordis.patch.yml` to `cordis.patch.yml.bak-<timestamp>` and replaces the file atomically; hand-written rows outside the managed blocks are preserved verbatim.
 - **On disk**: state in `<DSH_HOME>/config-switches/switches.json`, patch in `<DSH_HOME>/profiles/<profile>/cordis.patch.yml`.
 - **Bundled example**: `DBX MCP 工具` mounts `@deepseek-ai/dsh-mcp-client` on the host layer (global tools), so every mode — standard included — gets the `mcp__dbx__*` tools; it costs roughly 28K tokens of tool definitions per turn, so turn it off when unused.
 
@@ -125,6 +125,7 @@ The host half registers a prefix route on `ctx.webServer`:
 | GET | `/session-cleaner/api/switches` | Switch list + target profile and patch path |
 | POST | `/session-cleaner/api/switches/toggle` | `{ id, enabled }` |
 | POST | `/session-cleaner/api/switches/add` | `{ id?, name, description?, insert }` |
+| POST | `/session-cleaner/api/switches/update` | `{ id, name?, description?, insert? }` |
 | POST | `/session-cleaner/api/switches/remove` | `{ id }` |
 
 Same-origin `fetch`, no extra auth header; mutations are serialized per session id.

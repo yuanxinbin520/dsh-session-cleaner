@@ -52,7 +52,7 @@ DSH 的工作区归属由会话头行里不可变的 `cwd` 推导，所以只改
 
 - **热生效**：profile 补丁层由 DSH 的 HMR 监听（`patchReload: live`），改完约 1 秒内重新组合——不需要重启，也不只是新会话，运行中的会话工具集同样跟着变。
 - **一个开关 = 一段 YAML 片段**：片段以 `- insert:` 或 `- id:` 开头即可；插件自动从片段里的 `id:` 行推导行 id，并在块内加 `- id: <row>` + `disabled: true|false` 覆盖行来表达开/关。片段加了 `id` 时还可以关掉 profile 里任何已有的一行。
-- **页面上的操作**：开启 / 关闭、查看片段、删除、新增（名称 + 可选 id + 片段）。每次写盘前把 `cordis.patch.yml` 备份成 `cordis.patch.yml.bak-<时间戳>`，写盘是原子替换，插件块之外你手写的行原样保留。
+- **页面上的操作**：开启 / 关闭、查看片段、编辑（改名称、说明、片段，id 与开关状态保留）、删除、新增（名称 + 可选 id + 说明 + 片段）。每次写盘前把 `cordis.patch.yml` 备份成 `cordis.patch.yml.bak-<时间戳>`，写盘是原子替换，插件块之外你手写的行原样保留。
 - **落盘位置**：状态在 `<DSH_HOME>/config-switches/switches.json`，补丁写 `<DSH_HOME>/profiles/<profile>/cordis.patch.yml`。
 - **内置示例**：`DBX MCP 工具` —— 把 `@deepseek-ai/dsh-mcp-client` 挂到宿主层（全局工具），所有模式（含标准模式）都能用 `mcp__dbx__*`；代价是每轮多约 28K tokens 的工具定义，用完关掉即可。
 
@@ -119,6 +119,7 @@ dsh plugin --profile <name> add link:/absolute/path/to/dsh-session-cleaner
 | GET | `/switches` | 开关列表 + 目标 profile 与补丁路径 |
 | POST | `/switches/toggle` | `{ id, enabled }` |
 | POST | `/switches/add` | `{ id?, name, description?, insert }` |
+| POST | `/switches/update` | `{ id, name?, description?, insert? }` |
 | POST | `/switches/remove` | `{ id }` |
 
 同源 `fetch`，无需额外鉴权头；按会话 id 串行化，避免同一会话并发操作。
