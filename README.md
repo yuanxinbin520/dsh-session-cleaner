@@ -1,48 +1,77 @@
 # dsh-session-cleaner
 
-[中文说明](README.zh-CN.md) | English
+DSH 会话管理精简插件：只做两件事，放在会话行「…」菜单里（在 **重命名 / 归档** 等内置项下方）。
 
-A deliberately small [DeepSeek Harness](https://github.com/deepseek-ai) plugin that adds exactly two
-actions to a Session's `…` menu, below the shipped **Rename / Archive** rows:
-
-| Menu row | Order | What it does |
+| 菜单项 | 顺序 | 行为 |
 | --- | --- | --- |
-| **Move to another workspace…** | 500 | A real cross-workspace move: rewrites the session's `cwd`, relocates the artifact, swaps workspace accounting |
-| **Thoroughly delete session…** | 600 | Permanently deletes the session and every derived artifact, behind a confirmation dialog |
+| 移动到其他工作区… | 500 | 真正的跨工作区迁移：重写会话日志里的工作目录、把工件搬到新工作区、交换工作区归属 |
+| 彻底删除会话… | 600 | 永久删除会话及其全部派生数据，删除前弹出确认框 |
 
-The shipped rows occupy `pin` (100) / `rename` (200) / `fork` (300) / `archive` (400); this plugin
-registers at 500 and 600, and the first row carries `separatorBefore`, so both appear as their own
-group at the bottom of the menu.
+内置项占用 `pin`(100) / `rename`(200) / `fork`(300) / `archive`(400)，本插件两项分别是 500、600，第一项带 `separatorBefore`，所以它们自成一组落在菜单底部。
 
-## Config switches
+## 彻底删除到底删了什么
 
-**Settings → Built-in plugins** gains one more tab after "Plugin list" and "Plugin market": **config switches**. It does one small thing — it writes a patch fragment into the active profile's `cordis.patch.yml` and can toggle it at any time.
+确认框会明确列出范围，删除后返回逐项结果：
 
-- **Hot by design**: DSH watches the profile patch layer (`patchReload: live`) and recomposes within about a second, so no restart is involved — and it is not limited to new sessions; a running session's tool set follows the change too.
-- **One switch = one YAML fragment**: the fragment may start with `- insert:` or `- id:`; the plugin derives the row ids from the fragment's `id:` lines and expresses on/off as `- id: <row>` + `disabled: true|false` rows inside its own block. A fragment that carries an `id` can also disable any existing row of the profile.
-- **Page actions**: enable / disable, view the fragment, edit (name, description, fragment — the id and on/off state survive), delete, add (name + optional id + description + fragment). Every write backs up `cordis.patch.yml` to `cordis.patch.yml.bak-<timestamp>` and replaces the file atomically; hand-written rows outside the managed blocks are preserved verbatim.
-- **On disk**: state in `<DSH_HOME>/config-switches/switches.json`, patch in `<DSH_HOME>/profiles/<profile>/cordis.patch.yml`.
-- **Bundled example**: `DBX MCP 工具` mounts `@deepseek-ai/dsh-mcp-client` on the host layer (global tools), so every mode — standard included — gets the `mcp__dbx__*` tools; it costs roughly 28K tokens of tool definitions per turn, so turn it off when unused.
+| 数据 | 处理 |
+| --- | --- |
+| 会话日志目录（`$DSH_HOME/sessions/<项目>/session-<id>/`） | 整目录删除，含 v4/v3/v2/v1 全部代次与临时/备份文件 |
+| 运行中的会话/agent | 先 `cancel` + `dispose`，从 agent 注册表摘除，广播 `session/disposed` 让前端立刻移除该行 |
+| 工作区归属 | 从所有工作区的 `sessionIds` 移除 |
+| 归档 / 收藏标记 | 从 `archivedSessionIds`、`pinnedSessionIds` 移除 |
+| 投影缓存（逐会话） | 删除 `$DSH_HOME/storages/session_projcache/sessions/<id>.json`（含 `.lock` 等） |
+| 投影缓存（旧版聚合文件） | 从 `storages/session_projcache.json` 的 `tables.sessions` 删除该行，并先写 `.bak` 备份 |
 
-## Install
+`attachments/`、`cache/` 是内容寻址、跨会话共享的，无法归属到单个会话，因此不在删除范围内。
+
+安全边界：
+
+- 只有「从工件头行证明 id 匹配」的目录才会被删；证明不了就报告 `existed: false` 并原样保留（junk/损坏目录不会被误删）。
+- 目录必须严格位于 `<sessions>/<项目>/<会话>` 且两层都不能是符号链接/junction。
+- 会话标识做过路径穿越校验（`../evil` 直接 400）。
+- 删除用**只读头帧**定位，日志截断时仍可删除；而移动会完整解码，遇到截断的 zstd 帧会拒绝改写并保留原文件。
+
+## 移动的语义
+
+DSH 的工作区归属由会话头行里不可变的 `cwd` 推导，所以只改注册表会被下一次对账回滚。本插件的移动是「真迁移」：
+
+1. 校验源/目标目录，拒绝覆盖已存在的目标工件；
+2. 完整解码（多帧 zstd）并重写头行 `cwd`，把代次（`v3`/`v4`）与文件名的版本对齐；
+3. 原子发布到新路径（先隐藏旧文件，失败则回滚旧文件）；
+4. 运行中的会话不销毁：原地重绑 `session.header` 与写入器句柄，后续事件直接写到新文件；
+5. 交换工作区归属（从旧工作区 detach、向目标 attach），失败则整体回滚；
+6. 清理旧目录，并刷新投影缓存。
+
+打开中的会话移动后无需刷新页面。
+
+## 配置开关
+
+设置 → **内置插件** →「配置开关」标签页（在「插件列表」「插件市场」之后）是本插件的**配置开关**页。它做一件很小的事：把一段 patch 片段写进当前 profile 的 `cordis.patch.yml`，并随时开关。
+
+- **热生效**：profile 补丁层由 DSH 的 HMR 监听（`patchReload: live`），改完约 1 秒内重新组合——不需要重启，也不只是新会话，运行中的会话工具集同样跟着变。
+- **一个开关 = 一段 YAML 片段**：片段以 `- insert:` 或 `- id:` 开头即可；插件自动从片段里的 `id:` 行推导行 id，并在块内加 `- id: <row>` + `disabled: true|false` 覆盖行来表达开/关。片段加了 `id` 时还可以关掉 profile 里任何已有的一行。
+- **页面上的操作**：开启 / 关闭、查看片段、编辑（改名称、说明、片段，id 与开关状态保留）、删除、新增（名称 + 可选 id + 说明 + 片段）。每次写盘前把 `cordis.patch.yml` 备份成 `cordis.patch.yml.bak-<时间戳>`，写盘是原子替换，插件块之外你手写的行原样保留。
+- **落盘位置**：状态在 `<DSH_HOME>/config-switches/switches.json`，补丁写 `<DSH_HOME>/profiles/<profile>/cordis.patch.yml`。
+- **内置示例**：`DBX MCP 工具` —— 把 `@deepseek-ai/dsh-mcp-client` 挂到宿主层（全局工具），所有模式（含标准模式）都能用 `mcp__dbx__*`；代价是每轮多约 28K tokens 的工具定义，用完关掉即可。
+
+## 安装
 
 ```
-# from npm — recommended, and it needs no GitHub access
+# 从 npm 安装（推荐，不需要访问 GitHub）
 dsh plugin --profile web add @beiwen/dsh-session-cleaner
 
-# straight from GitHub, pinned to a release tag
+# 直接从 GitHub 安装并固定到发布 tag
 dsh plugin --profile web add github:yuanxinbin520/dsh-session-cleaner#v0.1.2
 
-# over HTTPS — use this when SSH port 22 is blocked on your network
+# 走 HTTPS —— 网络屏蔽 SSH 22 端口时用这个
 dsh plugin --profile web add https://github.com/yuanxinbin520/dsh-session-cleaner.git
 ```
 
-> The npm package is published under the author's npm scope as **`@beiwen/dsh-session-cleaner`**. The
-> unscoped name `dsh-session-cleaner` on npm belongs to an unrelated package, so always use the full
-> scoped spec (or a GitHub spec) — a bare `dsh-session-cleaner` would install someone else's plugin.
+> npm 上发布在作者账号的 scope 下：**`@beiwen/dsh-session-cleaner`**。不带 scope 的 `dsh-session-cleaner`
+> 在 npm 上属于另一个不相关的包，所以请始终填完整 scoped 名（或 GitHub 形式的 spec）——填裸名
+> `dsh-session-cleaner` 会装到别人的插件。
 
-If a `github:` install fails with `ssh: connect to host github.com port 22: Connection refused`, use the
-HTTPS form above, or route SSH over port 443 by adding this to `~/.ssh/config`:
+若 `github:` 安装报 `ssh: connect to host github.com port 22: Connection refused`，改用上面的 HTTPS 形式，或把 SSH 改走 443 端口（在 `~/.ssh/config` 中加入）：
 
 ```
 Host github.com
@@ -50,111 +79,67 @@ Host github.com
   Port 443
 ```
 
-On Windows behind a TLS-inspecting proxy, `git` may instead fail with
-`SSL certificate problem: unable to get local issuer certificate`. Point just GitHub at the Windows
-certificate store with:
+Windows 上若处于 TLS 劫持代理环境，git 还可能报 `SSL certificate problem: unable to get local issuer
+certificate`。只把 github.com 指向 Windows 证书库即可：
 
 ```
 git config --global 'http.https://github.com/.sslBackend' schannel
 ```
 
-(the broader `git config --global http.sslBackend schannel` works too), or use the npm spec above, which
-skips git entirely.
+（写成全局的 `git config --global http.sslBackend schannel` 也可以），或直接用上面的 npm spec —— 那条
+路径完全不经过 git。
 
-The **desktop** profile is managed exclusively by the Electron app, so `dsh plugin --profile desktop`
-refuses; install it from **Settings → Plugins** instead (paste `@beiwen/dsh-session-cleaner`, with
-the registry set to the npm mirror if GitHub is unreachable), or let the plugin manager run
-`install_bundle @beiwen/dsh-session-cleaner`. A profile restart (or a page refresh for the client
-half) activates it.
+desktop profile 由 Electron 应用独占管理，命令行会拒绝；请用应用内的 **设置 → 插件** 安装（填
+`@beiwen/dsh-session-cleaner`，GitHub 不通时把安装源切到中国大陆镜像源），或让插件管理器执行
+`install_bundle @beiwen/dsh-session-cleaner`。安装后重启（客户端半只需刷新页面）即可生效。
 
-Requirements: DSH `>= 0.2.0-rc.1` (tested on `0.2.0-rc.2`), Node `>= 22.15` (uses the built-in
-`node:zlib` Zstandard API — no dependencies, no build step).
+要求：DSH `>= 0.2.0-rc.1`（在 `0.2.0-rc.2` 上验证），Node `>= 22.15`（使用内置 `node:zlib` 的 Zstandard API）——**无第三方依赖、无需构建**。
 
-## What "thoroughly delete" removes
+### 本地开发
 
-The confirmation dialog states the scope up front, and the result view reports what was removed:
+源码目录即插件目录，改完刷新页面（客户端半）即生效：
 
-| Data | Handling |
-| --- | --- |
-| Session log directory (`$DSH_HOME/sessions/<project>/session-<id>/`) | Removed entirely, including every generation (v4/v3/v2/v1) plus temp/backup files |
-| Live session / agent | `cancel` + `dispose`, dropped from the agent registry, `session/disposed` broadcast so the client drops the row immediately |
-| Workspace membership | Removed from every workspace's `sessionIds` |
-| Archive / pin markers | Removed from `archivedSessionIds` and `pinnedSessionIds` |
-| Projection cache (per session) | `$DSH_HOME/storages/session_projcache/sessions/<id>.json` (and `.lock`/`.tmp`) deleted |
-| Projection cache (legacy aggregate) | Row deleted from `storages/session_projcache.json`'s `tables.sessions`, after writing a `.bak` |
+```
+dsh plugin --profile <name> add link:/absolute/path/to/dsh-session-cleaner
+```
 
-The `attachments/` and `cache/` trees are content-addressed and shared between sessions, so nothing
-there belongs to a single session.
+卸载：设置 → 插件 → `dsh-session-cleaner` → 卸载，随后删除 profile 中残留的 junction。
 
-Safety boundaries:
+## 接口（宿主半）
 
-- A directory is only deleted when the artifact's **header line proves the id**; otherwise the plugin
-  reports `existed: false` and leaves it untouched (junk or corrupt directories are never guessed at).
-- The directory must be exactly `<sessions>/<project>/<session>`, and neither child level may be a
-  symlink/junction (re-checked immediately before the destructive call).
-- Session ids are validated against path traversal (`../evil` → HTTP 400).
-- Deletion locates the session by reading **only the header frame**, so a truncated log is still
-  deletable; the move path decodes the whole log and refuses to rewrite a truncated one.
+宿主在 `ctx.webServer` 上注册 `/session-cleaner/api` 前缀路由：
 
-## Move semantics
-
-DSH derives workspace membership from the immutable `cwd` in the session header, so a registry-only
-edit would be reverted by the next reconciliation. A move is therefore a real migration:
-
-1. Source/target directories are validated; an existing target artifact is never overwritten.
-2. The full multi-frame log is decoded and the header's `cwd` rewritten, with the format generation
-   (`v3`/`v4`) kept in sync with the filename.
-3. The artifact is published atomically (old file hidden first; a failure restores it).
-4. A **live** session is not torn down: its in-memory header and writer handle are retargeted in place,
-   so later events land in the new file.
-5. Workspace accounting is swapped (detach from the old workspace, attach to the target). Any failure
-   rolls the whole move back.
-6. The old directory is cleaned up and the projection cache refolded.
-
-No page refresh is needed after moving an open session.
-
-## Host API
-
-The host half registers a prefix route on `ctx.webServer`:
-
-| Method | Path | Purpose |
+| 方法 | 路径 | 说明 |
 | --- | --- | --- |
-| GET | `/session-cleaner/api/workspaces?sessionId=…` | Workspace list + the session's current workspace |
-| POST | `/session-cleaner/api/move` | `{ sessionId, targetWorkspaceId }` |
-| POST | `/session-cleaner/api/delete` | `{ sessionId }` |
-| GET | `/session-cleaner/api/switches` | Switch list + target profile and patch path |
-| POST | `/session-cleaner/api/switches/toggle` | `{ id, enabled }` |
-| POST | `/session-cleaner/api/switches/add` | `{ id?, name, description?, insert }` |
-| POST | `/session-cleaner/api/switches/update` | `{ id, name?, description?, insert? }` |
-| POST | `/session-cleaner/api/switches/remove` | `{ id }` |
+| GET | `/workspaces?sessionId=…` | 工作区列表 + 该会话当前所属工作区 |
+| POST | `/move` | `{ sessionId, targetWorkspaceId }` |
+| POST | `/delete` | `{ sessionId }` |
+| GET | `/switches` | 开关列表 + 目标 profile 与补丁路径 |
+| POST | `/switches/toggle` | `{ id, enabled }` |
+| POST | `/switches/add` | `{ id?, name, description?, insert }` |
+| POST | `/switches/update` | `{ id, name?, description?, insert? }` |
+| POST | `/switches/remove` | `{ id }` |
 
-Same-origin `fetch`, no extra auth header; mutations are serialized per session id.
+同源 `fetch`，无需额外鉴权头；按会话 id 串行化，避免同一会话并发操作。
 
-## Development
+## 开发与验证
 
 ```
-npm run check                    # syntax check both halves
-node test/verify-artifacts.mjs   # decode -> re-encode -> decode round-trip over real logs
-node test/verify-ops.mjs         # delete / move / truncated log / path safety on a temp fixture
-node test/verify-switches.mjs    # switch engine: block composition, idempotence, disabled-only flips
+npm run check                    # 两半的语法检查
+node test/verify-artifacts.mjs   # 对真实日志做「解码→重编码→解码」字节级往返校验
+node test/verify-ops.mjs         # 在临时 fixture 里跑删除/移动/损坏日志/路径安全
+node test/verify-switches.mjs    # 开关引擎：块合成、幂等、只翻 disabled、保留用户手写行
 ```
 
-`test/verify-artifacts.mjs` is the test that protects the move path: DSH's `.jsonl.zstd` files are
-**concatenated frames, one per durable batch** (one measured log was 9.9 MB / 7189 frames / 35.6 MB
-decoded). Any decoder that reads only the first frame silently reduces a log to its header line, so
-this suite asserts a byte-identical round-trip. Both suites are self-contained: without a DSH install
-the ops suite builds its own synthetic 2001-frame log, so CI needs no Harness.
+`test/verify-artifacts.mjs` 是保护移动操作的关键测试：DSH 的 `.jsonl.zstd` 是**逐批拼接的多帧**（实测一个 9.9 MB 日志含 7189 帧、解出 35.6 MB），任何只读第一帧的解码器都会把日志截成只剩头行。两套测试都自带 fixture：没有 DSH 安装时 ops 套件会自造 2001 帧的合成日志，因此 CI 无需 Harness 环境。
 
-## Known limitations
+## 已知边界
 
-- Deleting the session you currently have open removes its row; the view can stay on an empty
-  conversation until you refresh.
-- If the host rewrites the aggregate `session_projcache.json` while running, a pruned row may
-  reappear; the per-session files are unaffected (cleaning while DSH is stopped is the safest).
-- Requires a `sessionPersistence` backend exposing `locate()`; without it the plugin errors out
-  instead of deleting blindly.
-- No batch operations (use a session-manager style plugin for bulk work).
+- 删除当前正打开的会话：行会消失，界面可能停留在该会话的空视图，刷新页面即可。
+- 投影缓存聚合文件若在宿主运行时被回写，孤立行可能重新出现；逐会话文件不受影响（应用关闭后清理最彻底）。
+- 仅支持 `sessionPersistence` 暴露 `locate()` 的后端；没有 `locate` 时会明确报错而不是盲删。
+- 未做批量操作（批量删除可用 session-manager 类插件的面板）。
 
-## License
+## 许可
 
-MIT — see [LICENSE](LICENSE).
+MIT，见 [LICENSE](LICENSE)。
